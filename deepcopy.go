@@ -8,16 +8,24 @@ import (
 // ErrMapDepth is a overflow maxdepth error
 var ErrMapDepth = fmt.Errorf("overflow the maxdepth")
 
+var errInvalidValue = fmt.Errorf("invalid value")
+
 // Copy return a copy from value
 func Copy(value interface{}) (interface{}, error) {
 	v, err := deepCopy(reflect.ValueOf(value), 0, 1024)
 	if err != nil {
+		if err == errInvalidValue {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return v.Interface(), nil
 }
 
 func deepCopy(value reflect.Value, dep, maxDep int) (reflect.Value, error) {
+	if !value.IsValid() {
+		return reflect.ValueOf(nil), errInvalidValue
+	}
 	if dep > maxDep {
 		return reflect.Zero(value.Type()), ErrMapDepth
 	}
@@ -42,7 +50,10 @@ func deepCopy(value reflect.Value, dep, maxDep int) (reflect.Value, error) {
 		v := reflect.New(typ.Elem())
 		value, err := deepCopy(value.Elem(), dep+1, maxDep)
 		if err != nil {
-			return value, err
+			if err != errInvalidValue {
+				return value, err
+			}
+			value = reflect.ValueOf(nil)
 		}
 		v.Elem().Set(value)
 		return v, nil
@@ -55,7 +66,10 @@ func deepCopy(value reflect.Value, dep, maxDep int) (reflect.Value, error) {
 			value := value.MapIndex(key)
 			value, err := deepCopy(value, dep+1, maxDep)
 			if err != nil {
-				return value, err
+				if err != errInvalidValue {
+					return value, err
+				}
+				value = reflect.ValueOf(nil)
 			}
 			v.SetMapIndex(key, value)
 		}
@@ -69,7 +83,10 @@ func deepCopy(value reflect.Value, dep, maxDep int) (reflect.Value, error) {
 			value := value.Index(i)
 			value, err := deepCopy(value, dep+1, maxDep)
 			if err != nil {
-				return value, err
+				if err != errInvalidValue {
+					return value, err
+				}
+				value = reflect.ValueOf(nil)
 			}
 			v.Index(i).Set(value)
 		}
@@ -80,7 +97,10 @@ func deepCopy(value reflect.Value, dep, maxDep int) (reflect.Value, error) {
 			value := value.Index(i)
 			value, err := deepCopy(value, dep+1, maxDep)
 			if err != nil {
-				return value, err
+				if err != errInvalidValue {
+					return value, err
+				}
+				value = reflect.ValueOf(nil)
 			}
 			v.Index(i).Set(value)
 		}
@@ -95,7 +115,10 @@ func deepCopy(value reflect.Value, dep, maxDep int) (reflect.Value, error) {
 			value := value.Field(i)
 			value, err := deepCopy(value, dep+1, maxDep)
 			if err != nil {
-				return value, err
+				if err != errInvalidValue {
+					return value, err
+				}
+				value = reflect.ValueOf(nil)
 			}
 			v.FieldByName(field.Name).Set(value)
 		}

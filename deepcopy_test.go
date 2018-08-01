@@ -98,6 +98,16 @@ func TestSlice(t *testing.T) {
 			}
 		}
 	}
+
+	var a []int
+	b, err := deepcopy.Copy(a)
+	if err != nil {
+		t.Errorf("test copy nil slice failed, %s", err)
+	}
+	if reflect.TypeOf(b) != reflect.TypeOf(a) {
+		t.Errorf("test copy nil slice type failed, %s", reflect.TypeOf(b))
+
+	}
 }
 
 func TestArray(t *testing.T) {
@@ -152,7 +162,6 @@ func TestTest(t *testing.T) {
 	log.Println(newVal.Elem().Kind(), newVal.Elem().CanSet())
 	newVal.Elem().Set(val.Elem())
 	log.Println(*newVal.Interface().(*int))
-
 }
 
 func TestPtr(t *testing.T) {
@@ -189,6 +198,16 @@ func TestPtr(t *testing.T) {
 		if &c == *ba {
 			t.Error("change value failed")
 		}
+	}
+
+	var aaa interface{}
+	var aaaa *interface{} = &aaa
+	b, err = deepcopy.Copy(aaaa)
+	if err != nil {
+		t.Error("copy invalid ptr failed", err)
+	}
+	if reflect.TypeOf(b) != reflect.TypeOf(aaaa) {
+		t.Error("copy invalid ptr type failed", reflect.TypeOf(b))
 	}
 
 }
@@ -337,4 +356,29 @@ func TestError(t *testing.T) {
 		t.Error("copy chan should not support")
 	}
 
+	var aa interface{}
+	b, err := deepcopy.Copy(aa)
+	if b != nil && err != nil {
+		t.Error("copy nil failed")
+	}
+}
+
+func TestInvalid(t *testing.T) {
+	var a = []interface{}{
+		nil, nil, nil,
+	}
+	b, err := deepcopy.Copy(a)
+	if err != nil {
+		t.Error("copy invalid slice failed", err)
+	}
+	if reflect.TypeOf(b) != reflect.TypeOf(a) {
+		t.Error("copy invalid slice type failed")
+	}
+	if bb, ok := b.([]interface{}); !ok {
+		t.Error("copy invalid slice type failed")
+	} else if len(bb) != 3 {
+		t.Error("copy invalid slice length failed")
+	} else if bb[2] != nil {
+		t.Error("copy invalid slice value failed")
+	}
 }
